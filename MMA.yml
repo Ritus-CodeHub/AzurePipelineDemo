@@ -1,0 +1,37 @@
+# Azure Pipelines YAML
+
+trigger:
+- '*'
+
+pool:
+  vmImage: 'windows-latest'  
+
+variables:
+  solution: '**/*.sln'  
+  buildPlatform: 'Any CPU'
+  buildConfiguration: 'Release'
+  deployToEnvironment: 'YourEnvironmentName' 
+
+steps:
+- task: NuGetToolInstaller@1
+
+- task: NuGetCommand@2
+  inputs:
+    restoreSolution: '$(solution)'
+
+
+- script: dotnet restore $(solution)
+  displayName: 'Restore NuGet packages'
+
+- script: dotnet build $(solution) --configuration $(buildConfiguration)
+  displayName: 'Build'
+
+- script: dotnet publish $(solution) --configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)
+  displayName: 'Publish'
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    artifactName: 'drop'
+    publishLocation: 'Container'
+  displayName: 'Publish Artifacts'
