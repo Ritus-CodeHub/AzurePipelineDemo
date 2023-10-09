@@ -1,0 +1,43 @@
+trigger:
+  branches:
+    include:
+    - '*'
+variables:
+- name: solution
+  value: '**/*.sln'
+- name: buildPlatform
+  value: 'Any CPU'
+- name: buildConfiguration
+  value: 'Release'
+- name: deployToEnvironment
+  value: 'YourEnvironmentName'
+stages:
+- stage: __default
+  jobs:
+  - job: Job
+    pool:
+      vmImage: 'windows-latest'
+    steps:
+    - task: NuGetToolInstaller@1
+    - task: NuGetCommand@2
+      inputs:
+        restoreSolution: '$(solution)'
+    - task: CmdLine@2
+      displayName: 'Restore NuGet packages'
+      inputs:
+        script: dotnet restore $(solution)
+    - task: CmdLine@2
+      displayName: 'Build'
+      inputs:
+        script: dotnet build $(solution) --configuration $(buildConfiguration)
+    - task: CmdLine@2
+      displayName: 'Publish'
+      inputs:
+        script: dotnet publish $(solution) --configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)
+    - task: PublishBuildArtifacts@1
+      inputs:
+        pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+        artifactName: 'drop'
+        publishLocation: 'Container'
+      displayName: 'Publish Artifacts'
+
