@@ -1,0 +1,53 @@
+# Azure Pipelines YAML
+
+trigger:
+- '*'
+
+pool:
+  vmImage: 'windows-latest'  # You can choose a different VM image as per your requirements.
+
+variables:
+  solution: '**/*.sln'  # Update the path to your solution file if needed.
+  buildPlatform: 'Any CPU'
+  buildConfiguration: 'Release'
+  deployToEnvironment: 'YourEnvironmentName'  # Update with your target environment
+
+steps:
+- task: UseDotNet@2
+  inputs:
+    packageType: 'sdk'
+    installationPath: $(Agent.ToolsDirectory)/dotnet
+    version: '4.7.2'
+    installationPathUser: true
+  displayName: 'Install .NET SDK 4.7.2'
+
+- script: dotnet restore $(solution)
+  displayName: 'Restore NuGet packages'
+
+- script: dotnet build $(solution) --configuration $(buildConfiguration)
+  displayName: 'Build'
+
+- script: dotnet publish $(solution) --configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)
+  displayName: 'Publish'
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    artifactName: 'drop'
+    publishLocation: 'Container'
+  displayName: 'Publish Artifacts'
+
+# Add deployment steps here (e.g., deploy to Azure App Service).
+# Example:
+# - task: AzureRmWebAppDeployment@4
+#   inputs:
+#     ConnectionType: 'AzureRM'
+#     azureSubscription: 'YourAzureSubscription'
+#     appType: 'webApp'
+#     WebAppName: 'YourWebAppName'
+#     packageForLinux: '$(System.DefaultWorkingDirectory)/drop/**/*.zip'
+#     enableCustomDeployment: true
+#     enableXmlTransform: true
+#     deploymentMethod: 'auto'
+#     deploymentClobberSettings: true
+
